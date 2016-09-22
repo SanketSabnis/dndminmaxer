@@ -8,14 +8,12 @@ class Combat():
 
     def dpr(self, opp=None):
         hit_chance = self.hit_chance(opp)
-        self.dmg_str = "%s(%s*%s+%s)"% (self.attacks, hit_chance, self.weapon, self.str_mod)
+        self.dmg_str = "%s(%s*(%s+%s))"% (self.attacks, hit_chance, self.weapon, self.str_mod + self.dmg_bonus)
         self.check_feats(hit_chance)
-        fighting_style = self.fighting_style if hasattr(self, "fighting_style") else None
-        #print self.dmg_str
-        return evaluate(self.dmg_str, fighting_style=fighting_style)
+        return evaluate(self.dmg_str, fighting_style=self.fighting_style)
 
     def dtpr(self, opp):
-        dmg_reduction = self.check_def_feats(opp) or 0
+        dmg_reduction = self.check_def_feats(opp)
         #if dmg_reduction: print dmg_reduction
         return opp.dpr(self) - dmg_reduction
 
@@ -23,17 +21,13 @@ class Combat():
         return self.hit_points/float(self.dtpr(opp))
 
     def eff(self, opp):
-        return (self.dpr(opp) - self.dtpr(opp))*self.ris(opp)
+        return (self.dpr(opp) * self.ris(opp))/opp.ris(self)
 
     def dmg(self, opp):
         return (self.dpr(opp) * self.ris(opp))
 
-    def odmg(self, opp=None):
-        return (opp.dpr(self) * opp.ris(self))
-
     def hit_chance(self, opp=None):
-        return (20 - (opp.ac - self.to_hit))/ float(20) if opp else 1
-
+        return min(1, (20 - (opp.ac - self.to_hit))/ float(20)) if opp else 1
 
 class Character(Combat):
 
@@ -65,6 +59,7 @@ class Character(Combat):
             self.hit_points = 76
             self.attacks = 1
             self.proficieny_bonus = 2
+            self.fighting_style = None
         if "attributes" in params:
             attributes = params["attributes"]
             self.strength = attributes[0]
@@ -86,27 +81,36 @@ class Character(Combat):
         self.initiative = self.dex_mod
         self.to_hit = getattr(self, self.primary_attr) + self.proficieny_bonus
         self.dmg_str = "%s(%s+%s)"% (self.attacks, self.weapon, self.str_mod)
+        self.dmg_bonus  = 0
+        self.dmg_str = "%s(%s+%s+%s)"% (self.attacks, self.weapon, self.str_mod, self.dmg_bonus)
+        self.crit_chance = 0.05
         if hasattr(self, "hit_die"):
             self.hit_points = evaluate("%s+%s+%s(%s+%s)"%(self.hit_die.replace("d",""), self.con_mod, self.level-1, self.hit_die, self.con_mod))
         if hasattr(self, "fighting_style"):
             if self.fighting_style == "DEFENSE":
                 self.ac += 1
             if self.fighting_style == "DUELLING":
-                self.ac += 2#
+                self.ac += 2
+                self.dmg_bonus +=2
         if hasattr(self, "shield"):
             self.ac += self.shield
 
 
     def check_feats(self, hit_chance=1):
-        if not (hasattr(self,"feats") and self.feats): return
+        if not hasattr(self,"feats") or not self.feats: return
+        if "savage" in self.feats:
+            num_die = self.weapon[0] if self.weapon[0] !="d" else 1 
+            if self.attacks >1:
+                self.dmg_str = "%s*(DropLowest%s%s+%s)+%s(%s*(%s+%s))"% (hit_chance,num_die+1, self.weapon, self.str_mod+ self.dmg_bonus, self.attacks-1, hit_chance, self.weapon, self.str_mod+ self.dmg_bonus)
+            else:
+                self.dmg_str = "%s*(DropLowest%s%s+%s)"% (hit_chance, num_die+1,self.weapon, self.str_mod+ self.dmg_bonus)
         if "polearm_master" in self.feats:
-            self.dmg_str = "%s+%s*d4+%s"% (self.dmg_str, hit_chance, self.str_mod)
+            self.dmg_str = "%s+(%s*(d4+%s))"% (self.dmg_str, hit_chance, self.str_mod+ self.dmg_bonus)
+        if "gwm" in self.feats:
+            self.dmg_str = "%s+(%s*%s(%s+%s))"% (self.dmg_str, self.crit_chance, hit_chance, self.weapon, self.str_mod+ self.dmg_bonus)
 
     def check_def_feats(self, opp):
-        if not (hasattr(self,"feats") and self.feats): return 0
+        if not hasattr(self,"feats") or not self.feats: return 0
         if "ham" in self.feats:
-            return (opp.attacks*opp.hit_chance(self)*3)
-
-
-
-
+            return opp.attacks*opp.hit_chance(self)*3
+        return 0

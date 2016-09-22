@@ -16,8 +16,6 @@ def roll(die, randomize=False,fighting_style=None,crit=False,crit_chance=None):
         value = (die_size+1)/float(2)
     if crit and crit_chance:
         value += (crit_chance*roll(die, randomize, fighting_style, crit=False))
-    if fighting_style=="DUELLING":
-        value +=2
     return value
 
 def get_die(pos, tokens):
@@ -55,10 +53,10 @@ def evaluate(string, randomize=False, fighting_style=None, crit=False,crit_chanc
     pos = 0
     while (pos <len(tokens)):
         token = tokens[pos]
-        multiplier = ""
         #print pos, token
         if token == "(":
-            eval_tokens.append("*(")
+            eval_tokens.append("%s(" % ("*"if pos>0 and tokens[pos-1].isdigit() else ""))
+
         elif token in operators or token.isdigit():
             eval_tokens.append(token)
         elif "d" == token:
@@ -69,25 +67,26 @@ def evaluate(string, randomize=False, fighting_style=None, crit=False,crit_chanc
             if pos != len(tokens)-1:
                 eval_tokens.append(tokens[pos])
         elif "D" == token:
-            # Search for highest , highest = drop lowest
-            patt = r"Droplowest(\d+)(d\d+)"
+            # Search for Drop lowest
+            patt = r"DropLowest(\d+)(d\d+)"
             p = re.compile(patt)
             m = re.search(p, tokens[pos:])
             if m and m.groups():
                 avgroll = parse_match(m, droplowest=True)
                 if avgroll: eval_tokens.append(avgroll)
-                pos += len(m.group(0))
+                pos += len(m.group(0))-1
             else:
-                # Search for lowest , lowest = drop highest
-                patt = r"Drophighest(\d+)(d\d+)"
+                # Search for Drop highest
+                patt = r"DropHighest(\d+)(d\d+)"
                 p = re.compile(patt)
                 m = re.search(p, tokens[pos:])
                 if m and m.groups():
                     avgroll = parse_match(m, droplowest=False)
                     if avgroll: eval_tokens.append(avgroll)
-                    pos += len(m.group(0))
+                    pos += len(m.group(0))-1
         pos += 1
     eval_str = "".join(map(str,eval_tokens))
+    #print eval_str
     return eval(eval_str)
 
 def strip_spaces(string):
