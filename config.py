@@ -3,6 +3,40 @@ import random
 import re
 from numpy import mean
 
+monster = {
+    "strength": 18,
+    "dexterity": 11,
+    "consitution": 16,
+    "initelligence": 6,
+    "wisdom": 11,
+    "charisma": 8,
+    "level": 3,
+    "ac": 14,
+    "weapon": "2d12",
+    "hit_points": 76,
+    "attacks": 1,
+    "profiency_bonus": 2,
+    "fighting_style": None,
+    "smite": "",
+    "name": "Minotaur"
+}
+
+player = {
+    "strength": 18,
+    "dexterity": 8,
+    "consitution": 14,
+    "initelligence": 8,
+    "wisdom": 10,
+    "charisma": 16,
+    "level": 5,
+    "primary_attr": "str_mod",
+    "ac": 17,
+    "weapon": "d10",
+    "hit_die": "d10",
+    "attacks": 2,
+    "smite": ""
+}
+
 operators = ["+","-","*","/","(",")","."]
 def roll(die, randomize=False,fighting_style=None,crit=False,crit_chance=None):
     die_size = int(die.split("d")[-1])
@@ -47,7 +81,7 @@ def parse_match(m, droplowest=False):
             avgroll = (sum_dies - drop_sum)/float(pow(die_size, num_dice))
     return avgroll
 
-def evaluate(string, randomize=False, fighting_style=None, crit=False,crit_chance=0.05):
+def evaluate(string, fighting_style=None,randomize=False, crit=False,crit_chance=0.05):
     tokens = strip_spaces(string)
     eval_tokens = []
     pos = 0
@@ -64,7 +98,7 @@ def evaluate(string, randomize=False, fighting_style=None, crit=False,crit_chanc
             if die:
                 die_roll = roll(die, randomize, fighting_style, crit, crit_chance)
                 eval_tokens.append("%s%s"%(multiplier, die_roll))
-            if pos != len(tokens)-1:
+            if pos != len(tokens):
                 eval_tokens.append(tokens[pos])
         elif "D" == token:
             # Search for Drop lowest
@@ -87,7 +121,7 @@ def evaluate(string, randomize=False, fighting_style=None, crit=False,crit_chanc
         pos += 1
     eval_str = "".join(map(str,eval_tokens))
     #print eval_str
-    return eval(eval_str)
+    return float(eval(eval_str))
 
 def strip_spaces(string):
     tokens = []
