@@ -1,6 +1,4 @@
 #!/usr/local/bin/python2.7
-import os
-import sys
 from evaluator import evaluate
 import config
 from combat import Combat
@@ -135,14 +133,14 @@ class Character(Combat):
     def check_modifiers(self, hit_chance):
         if hasattr(self, "haste"):
             self.dmg_str += "+(%s*(%s+%s%s))" % (hit_chance, self.weapon,
-                                                 self.attack_mod + self.dmg_bonus, self.reduced_smite())
+                                                 self.attack_mod + self.dmg_bonus,
+                                                 self.reduced_smite())
 
     def get_proficiency_bonus(self):
         if not hasattr(self, "level"):
             return 2
         mod = 1 if self.level % 4 == 0 else 2
         return self.level / 4 + mod
-        #2 if self.level < 5 else 3 if self.level < 9 else 4 if self.level < 13 else 5 if self.level < 17 else 6
 
     def reduced_smite(self):
         plus_split = self.smite.split("+")
