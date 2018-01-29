@@ -1,18 +1,19 @@
-
+smite = "3d8"
+bless = "d4"
 
 monster = {
-    "strength": 18,
+    "strength": 20,
     "dexterity": 11,
     "consitution": 16,
     "initelligence": 6,
     "wisdom": 11,
     "charisma": 8,
     "level": 3,
-    "ac": 20,
-    "weapon": "2d12",
-    "hit_points": 76,
+    "ac": 14,
+    "weapon": "2d8",
+    "hit_points": 46,
     "attacks": 1,
-    "profiency_bonus": 2,
+    "profiency_bonus": 0,
     "fighting_style": None,
     "smite": "",
     "name": "Minotaur",
@@ -21,22 +22,40 @@ monster = {
 }
 
 paladin = {
-    "strength": 18,
-    "dexterity": 8,
-    "consitution": 19,
+    "strength": 16,
+    "dexterity": 14,
+    "consitution": 16,
     "initelligence": 8,
-    "wisdom": 10,
-    "charisma": 16,
-    "level": 6,
+    "wisdom": 12,
+    "charisma": 8,
+    "level": 5,
     "primary_attr": "str_mod",
     "ac": 17,
-    "weapon": "d10",
+    "weapon": "d8",
     "hit_die": "d10",
-    "attacks": 2,
+    "attacks": 1,
+    "fighting_style": None,
     "smite": "",
     "bless": "",
     "bane": ""
 }
 
-smite = "3d8"
-bless = "d4"
+
+fighter = {
+    "strength": 18,
+    "dexterity": 14,
+    "consitution": 16,
+    "initelligence": 8,
+    "wisdom": 12,
+    "charisma": 8,
+    "level": 5,
+    "primary_attr": "str_mod",
+    "ac": 17,
+    "weapon": "d8",
+    "hit_die": "d10",
+    "attacks": 2,
+    "fighting_style": None,
+    "smite": "",
+    "bless": "",
+    "bane": ""
+}
