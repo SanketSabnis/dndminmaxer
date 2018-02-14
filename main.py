@@ -30,7 +30,8 @@ def plot_chars(players, opponents, opponent, plot_stat, plot_metric, independent
     plt.ylabel(ylabel)
     plt.legend(
         ["%s (%.2f)" % (p.name, getattr(p, plot_stat)(opponent)) for p in players],
-        loc="best"
+        loc="best",
+        fontsize="small"
     )
 
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         else:
             monsters = [
                 [Character(**dict(p.init_params, **{plot_metric: metric_value})) for p in players]
-                for metric_value in range(1, 14)
+                for metric_value in range(1, 21)
             ]
         for plot_stat in ["eff", "dpr"]:
             plt.subplot(fignum)

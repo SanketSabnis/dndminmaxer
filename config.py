@@ -71,8 +71,8 @@ barbarian = {
     "level": 3,
     "primary_attr": "str_mod",
     "ac": 17,
-    "weapon": "d8",
-    "hit_die": "d10",
+    "weapon": "d12",
+    "hit_die": "d12",
     "fighting_style": None,
     "smite": "",
     "bless": "",
@@ -80,6 +80,8 @@ barbarian = {
 }
 
 players = [
+    Character(name="Great Axe GWM2 Champion HBCrit", archetype="champion", feats=["gwm2"],
+              char_type="fighter", weapon="d12", crit_type="HBC"),
     Character(name="Great Axe GWM2", archetype="zealot", feats=["gwm2"],
               char_type="barbarian", weapon="d12", adv=1),
     Character(name="Great Axe GWM2 HBCrit", feats=["gwm2"], char_type="barbarian",

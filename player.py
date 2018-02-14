@@ -65,7 +65,7 @@ class Character(Combat):
                 self.dmg_bonus += 1
             if self.level >= 16:
                 self.dmg_bonus += 1
-            if self.level == 20:
+            if self.level >= 20:
                 self.strength += 4
                 self.consitution += 4
                 self.str_mod += 2
@@ -96,7 +96,7 @@ class Character(Combat):
         if hasattr(self, "shield"):
             self.ac += self.shield
 
-    def check_feats(self, hit_chance=1, raw_hit_chance=1.25):
+    def check_feats(self, hit_chance, raw_hit_chance):
         if not hasattr(self, "feats") or not self.feats:
             return
         if "polearm_master" in self.feats:
@@ -166,7 +166,9 @@ class Character(Combat):
             )
             if superiority_die:
                 self.dmg_str += "+%s*%sd%s" % (hit_chance, 1, superiority_die)
-                # print self.dmg_str
+
+        if hasattr(self, "archetype") and self.archetype == "zealot":
+            self.dmg_str += "+%s*(d6+%s)" % (hit_chance, self.level / 2)
 
     def check_def_feats(self, opp):
         if self.char_type == "barbarian":
