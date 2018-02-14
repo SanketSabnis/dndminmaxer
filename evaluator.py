@@ -1,23 +1,25 @@
-import random
 import re
 from numpy import mean
 
 operators = ["+", "-", "*", "/", "(", ")", "."]
 
 
-def roll(die, randomize=False, fighting_style=None, crit=False, crit_chance=None):
-    die_size = int(die.split("d")[-1])
+def roll(die, fighting_style=None, crit=False, crit_chance=None, crit_type="RAW"):
+    die_parts = die.split("d")
+    die_size = int(die_parts[-1])
+    die_count = die_parts[0] or 1
     value = 0
-    if randomize:
-        value = random.randint(1, die_size)
-    elif fighting_style == "GWF":
+    if fighting_style == "GWF":
         # Reroll on 1 and 2
         value = (die_size - 2) / float(die_size) * mean(range(3, die_size + 1)) + \
-            2 / float(die_size) * roll(die, randomize)
+            2 / float(die_size) * roll(die)
     else:
         value = (die_size + 1) / float(2)
     if crit and crit_chance:
-        value += (crit_chance * roll(die, randomize, fighting_style, crit=False))
+        if crit_type == "RAW":
+            value += (crit_chance * roll(die, fighting_style, crit=False))
+        else:
+            value += crit_chance * die_count * die_size
     return value
 
 
@@ -53,13 +55,21 @@ def parse_match(m, droplowest=False):
     return avgroll
 
 
-def evaluate(string, fighting_style=None, randomize=False, crit=False, crit_chance=1):
-    tokens = strip_spaces(string)
+def strip_spaces(string):
+    tokens = []
+    for ch in string:
+        if ch == " ":
+            continue
+        tokens.append(ch)
+    return "".join(tokens)
+
+
+def evaluate(dmg_str, fighting_style=None, crit=False, crit_chance=0.05, crit_type="RAW"):
+    tokens = strip_spaces(dmg_str)
     eval_tokens = []
     pos = 0
     while (pos < len(tokens)):
         token = tokens[pos]
-
         if token == "(":
             eval_tokens.append("%s(" % ("*"if pos > 0 and tokens[pos - 1].isdigit() else ""))
 
@@ -68,9 +78,9 @@ def evaluate(string, fighting_style=None, randomize=False, crit=False, crit_chan
         elif "d" == token:
             die, multiplier, pos = get_die(pos, tokens)
             if die:
-                die_roll = roll(die, randomize, fighting_style, crit, crit_chance)
+                die_roll = roll(die, fighting_style, crit, crit_chance, crit_type)
                 eval_tokens.append("%s%s" % (multiplier, die_roll))
-            if pos != len(tokens):
+            if pos != len(tokens) - 1:
                 eval_tokens.append(tokens[pos])
         elif "D" == token:
             # Search for Drop lowest
@@ -95,12 +105,3 @@ def evaluate(string, fighting_style=None, randomize=False, crit=False, crit_chan
         pos += 1
     eval_str = "".join(map(str, eval_tokens))
     return float(eval(eval_str))
-
-
-def strip_spaces(string):
-    tokens = []
-    for ch in string:
-        if ch == " ":
-            continue
-        tokens.append(ch)
-    return "".join(tokens)
