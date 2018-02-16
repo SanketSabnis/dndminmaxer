@@ -80,9 +80,10 @@ class Character(Combat):
 
         if hasattr(self, "hit_die"):
             hp = round(evaluate(self.hit_die))
-            no_of_players = self.count if hasattr(self, "count") else 1
-            self.hit_points = no_of_players * evaluate("%s+%s+%s(%s+%s)" % (
-                self.hit_die.replace("d", ""), hp, self.con_mod, self.level - 1, self.con_mod))
+            self.hit_points = evaluate("%s+%s+%s(%s+%s)" % (
+                self.hit_die.replace("d", ""), hp, self.level - 1, hp, self.con_mod))
+            if self.char_type == "barbarian" and self.fighting_style == "GWF":
+                self.hit_points += self.fighter_level * (6 + self.con_mod)
 
         if hasattr(self, "fighting_style"):
             if self.fighting_style == "DEFENSE":
@@ -111,11 +112,11 @@ class Character(Combat):
             else:
                 self.dmg_str = "%s*(DropLowest%s%s+%s)" % (
                     hit_chance, num_die + 1, self.weapon, self.attack_mod + self.dmg_bonus)
-
+        p_chance = None
         if "gwm" in self.feats or "gwm2" in self.feats:
-            penalty = 5 if "gwm" in self.feats else self.proficieny_bonus
-            bonus_dmg = 10 if "gwm" in self.feats else "%s*d%s" % (
-                self.proficieny_bonus / 2, self.weapon.split("d")[-1]
+            penalty = 5 if "gwm" in self.feats else 2
+            bonus_dmg = 10 if "gwm" in self.feats else (
+                "%.4f" % evaluate("d%s" % self.weapon.split("d")[-1], self.fighting_style)
             )
             p_chance = min(1, (raw_hit_chance * 20 - penalty) / 20.0)
             p_attack = "(%s*(%s+%s+%s%s))" % (p_chance, self.weapon,
@@ -156,26 +157,11 @@ class Character(Combat):
                                                       die, self.attack_mod + self.dmg_bonus,
                                                       self.reduced_smite())
 
-        if (hasattr(self, "archetype") and self.archetype != "champion"
-                and self.char_type == "fighter"):
-            superiority_die = (
-                12 if self.level >= 18
-                else 10 if self.level >= 10
-                else 8 if self.level >= 3
-                else 0
-            )
-            if superiority_die:
-                self.dmg_str += "+%s*%sd%s" % (hit_chance, 1, superiority_die)
-
         if hasattr(self, "archetype") and self.archetype == "zealot":
-            self.dmg_str += "+%s*(d6+%s)" % (hit_chance, self.level / 2)
+            self.dmg_str += "+%s*(d6+%s)" % (p_chance or hit_chance, self.level / 2)
 
     def check_def_feats(self, opp):
         if self.char_type == "barbarian":
-            if hasattr(self, "adv") and self.char_type == "barbarian":
-                if not hasattr(opp, "adv"):
-                    opp.adv = 1
-                    opp.add_adv()
             return round(opp.dpr(self) / 2.0)
         if not hasattr(self, "feats") or not self.feats:
             return 0
@@ -192,8 +178,10 @@ class Character(Combat):
     def get_proficiency_bonus(self):
         if not hasattr(self, "level"):
             return 2
-        mod = 1 if self.level % 4 == 0 else 2
-        return self.level / 4 + mod
+        char_level = self.level if not hasattr(self, "fighter_level") else (
+            self.level + self.fighter_level)
+        mod = 1 if char_level % 4 == 0 else 2
+        return char_level / 4 + mod
 
     def reduced_smite(self):
         plus_split = self.smite.split("+")
@@ -211,9 +199,11 @@ class Character(Combat):
                 crit_on = ["20", "19", "18"]
             elif self.level >= 3:
                 crit_on = ["20", "19"]
+        if hasattr(self, "sc"):
+            crit_on = ["20", "19"]
         crit_chance = len(crit_on) / die
         if hasattr(self, "adv"):
-            crit_chance = len(crit_on) * 2 / die - (len(crit_on)**2) / (die**2)
+            crit_chance = 1 - ((die - len(crit_on)) / die)**2
 
         return crit_chance
 

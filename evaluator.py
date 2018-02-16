@@ -19,7 +19,7 @@ def roll(die, fighting_style=None, crit=False, crit_chance=None, crit_type="RAW"
         if crit_type == "RAW":
             value += (crit_chance * roll(die, fighting_style, crit=False))
         else:
-            value += crit_chance * die_count * die_size
+            value += (crit_chance * die_count * die_size)
     return value
 
 
@@ -80,7 +80,7 @@ def evaluate(dmg_str, fighting_style=None, crit=False, crit_chance=0.05, crit_ty
             if die:
                 die_roll = roll(die, fighting_style, crit, crit_chance, crit_type)
                 eval_tokens.append("%s%s" % (multiplier, die_roll))
-            if pos != len(tokens) - 1:
+            if pos != len(tokens) and not tokens[pos].isdigit():
                 eval_tokens.append(tokens[pos])
         elif "D" == token:
             # Search for Drop lowest

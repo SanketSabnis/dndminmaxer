@@ -1,5 +1,7 @@
 #!/usr/bin/python2.7
 import matplotlib.pyplot as plt
+from evaluator import evaluate
+import sys
 
 import config
 from player import Character
@@ -38,7 +40,12 @@ def plot_chars(players, opponents, opponent, plot_stat, plot_metric, independent
 if __name__ == "__main__":
     opponent = config.opponent
     players = config.players
-    independent_stats = ["name", "ac", "weapon", "strength", "dexterity", "level", "dmg_str"]
+    # p, p1 = config.players
+    # print p.ris(opponent), p.dtpr(opponent), opponent.hit_chance(p), hasattr(opponent, "adv")
+    # print p1.ris(opponent), p1.dtpr(opponent), opponent.hit_chance(p1), hasattr(opponent, "adv")
+    # print p.ris(opponent), p.dtpr(opponent), opponent.hit_chance(p), hasattr(opponent, "adv")
+    # sys.exit(0)
+    independent_stats = ["name", "hit_points", "strength", "dexterity", "level", "dmg_str"]
     dependent_stats = ["dpr", "eff", "ris"]
     display_stats = independent_stats[:-2] + dependent_stats + [independent_stats[-1]]
     headers = {}

@@ -78,7 +78,6 @@ barbarian = {
     "bless": "",
     "bane": ""
 }
-
 players = [
     Character(name="Great Axe GWM2 Champion HBCrit", archetype="champion", feats=["gwm2"],
               char_type="fighter", weapon="d12", crit_type="HBC"),

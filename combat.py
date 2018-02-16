@@ -13,7 +13,6 @@ class Combat():
 
     def dtpr(self, opp):
         dmg_reduction = self.check_def_feats(opp)
-        # if dmg_reduction: print dmg_reduction
         opp.crit_type = self.crit_type if hasattr(self, "crit_type") else "RAW"
         return opp.dpr(self) - dmg_reduction
 
@@ -30,4 +29,8 @@ class Combat():
         return (20 - (opp.ac - (self.to_hit + evaluate(self.bless or "0")))) / 20.0
 
     def hit_chance(self, opp):
+        if hasattr(opp, "adv") and opp.char_type == "barbarian":
+            if not hasattr(self, "adv"):
+                self.adv = 1
+                self.add_adv()
         return min(1, self.raw_hit_chance(opp))
