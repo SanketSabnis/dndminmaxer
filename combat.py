@@ -5,8 +5,9 @@ class Combat():
 
     def dpr(self, opp):
         hit_chance = self.hit_chance(opp)
-        self.dmg_str = "%s(%s*(%s+%s%s))" % (self.attacks, hit_chance,
-                                             self.weapon, self.str_mod + self.dmg_bonus, self.smite)
+        self.dmg_str = "%s*(%s*(%s+%s%s))" % (self.attacks, hit_chance,
+                                              self.weapon, self.str_mod + self.dmg_bonus,
+                                              self.smite)
         self.check_modifiers(hit_chance)
         self.check_feats(hit_chance, self.raw_hit_chance(opp))
         return self.evaluate_dmg_str(self.dmg_str)

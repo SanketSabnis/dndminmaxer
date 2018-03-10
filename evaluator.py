@@ -19,7 +19,7 @@ def roll(die, fighting_style=None, crit=False, crit_chance=None, crit_type="RAW"
         if crit_type == "RAW":
             value += (crit_chance * roll(die, fighting_style, crit=False))
         else:
-            value += (crit_chance * die_count * die_size)
+            value += crit_chance * die_count * die_size
     return value
 
 
@@ -103,5 +103,6 @@ def evaluate(dmg_str, fighting_style=None, crit=False, crit_chance=0.05, crit_ty
                         eval_tokens.append(avgroll)
                     pos += len(m.group(0)) - 1
         pos += 1
+    #print eval_tokens
     eval_str = "".join(map(str, eval_tokens))
     return float(eval(eval_str))

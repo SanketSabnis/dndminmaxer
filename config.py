@@ -11,9 +11,9 @@ monster = {
     "wisdom": 11,
     "charisma": 8,
     "level": 3,
-    "ac": 17,
+    "ac": 14,
     "weapon": "2d12",
-    "hit_points": 76,
+    "hit_points": 176,
     "attacks": 1,
     "profiency_bonus": 0,
     "fighting_style": None,
@@ -30,12 +30,11 @@ paladin = {
     "initelligence": 8,
     "wisdom": 12,
     "charisma": 8,
-    "level": 5,
+    "level": 6,
     "primary_attr": "str_mod",
     "ac": 17,
     "weapon": "d8",
     "hit_die": "d10",
-    "attacks": 1,
     "fighting_style": None,
     "smite": "",
     "bless": "",
@@ -50,7 +49,7 @@ fighter = {
     "initelligence": 8,
     "wisdom": 12,
     "charisma": 8,
-    "level": 3,
+    "level": 4,
     "primary_attr": "str_mod",
     "ac": 17,
     "weapon": "d8",
@@ -68,7 +67,7 @@ barbarian = {
     "initelligence": 8,
     "wisdom": 12,
     "charisma": 8,
-    "level": 3,
+    "level": 8,
     "primary_attr": "str_mod",
     "ac": 17,
     "weapon": "d12",
@@ -79,22 +78,21 @@ barbarian = {
     "bane": ""
 }
 players = [
-    Character(name="Great Axe GWM2 Champion HBCrit", archetype="champion", feats=["gwm2"],
-              char_type="fighter", weapon="d12", crit_type="HBC"),
-    Character(name="Great Axe GWM2", archetype="zealot", feats=["gwm2"],
-              char_type="barbarian", weapon="d12", adv=1),
-    Character(name="Great Axe GWM2 HBCrit", feats=["gwm2"], char_type="barbarian",
-              weapon="d12", adv=1, archetype="zealot", crit_type="HBC"),
-    Character(name="Great Axe GWM RAW", archetype="zealot", feats=["gwm"],
-              char_type="barbarian", weapon="d12", adv=1),
-    Character(name="Great Axe GWM HBCrit", char_type="barbarian", feats=["gwm"],
-              weapon="d12", adv=1, archetype="zealot", crit_type="HBC"),
-    Character(name="Great Axe HBCrit", char_type="barbarian",
-              weapon="d12", adv=1, archetype="zealot", crit_type="HBC"),
-    Character(name="Great Axe", char_type="barbarian",
-              weapon="d12", adv=1, archetype="zealot")
+    Character(name="Great Axe GWM2", path="zealot", feats=["gwm2"],
+              char_type="barbarian", weapon="d12", crit_type="HBC"),
+    Character(name="Polearm Master GWF", path="zealot", feats=["polearm_master"],
+              char_type="barbarian", weapon="d10", crit_type="HBC", fighting_style="GWF",
+              fighter_level=3, level=5, archetype="champion"),
+    Character(name="Great Axe GWM2 GWF", feats=["gwm2"], char_type="barbarian",
+              weapon="d12", path="zealot", crit_type="HBC", fighting_style="GWF",
+              fighter_level=3, level=5, archetype="champion"),
+    Character(name="Polearm Master GWM2", path="zealot", feats=["polearm_master", "gwm2"],
+              char_type="barbarian", weapon="d10", crit_type="HBC", strength=16),
+    Character(name="Polearm Master GWF GWM2", path="zealot", feats=["polearm_master", "gwm2"],
+              char_type="barbarian", weapon="d10", crit_type="HBC", fighting_style="GWF",
+              fighter_level=3, level=5, archetype="champion", strength=16)
 ]
-
+'''
 old_players = [
     Character(name="Great Axe GWM2 Adv", feats=["gwm2"], char_type="fighter", fighting_style="GWF",
                    weapon="d12", archetype="battlemaster", adv=1),
@@ -115,5 +113,5 @@ old_players = [
     Character(name="Great Sword GWM2", feats=["gwm2"], char_type="fighter",
               fighting_style="DEFENSE", weapon="2d6")
 ]
-
-opponent = Character(char_type="monster", ac=14)
+'''
+opponent = Character(char_type="monster")

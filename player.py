@@ -1,6 +1,7 @@
 #!/usr/local/bin/python2.7
 from evaluator import evaluate
 import config
+import copy
 from combat import Combat
 
 
@@ -23,30 +24,10 @@ class Character(Combat):
                 delattr(self, att)
             setattr(self, att, value)
 
-        self.proficieny_bonus = self.get_proficiency_bonus()
         if not hasattr(self, "attack_att"):
             self.attack_att = "str_mod"
-
-        if hasattr(self, "level") and not hasattr(self, "attacks"):
-            level_attacks = [(1, 1), (5, 2)]
-            if self.char_type == "fighter":
-                level_attacks.extend([(11, 3), (20, 4)])
-                max_attack_ability_at = 6
-            for level, attacks in level_attacks:
-                if self.level >= level:
-                    self.attacks = attacks
-                max_attack_ability_at = 8
-
-            if self.level >= max_attack_ability_at:
-                attack_ability = 20
-            elif self.level >= 4:
-                attack_ability = 18
-            else:
-                attack_ability = self.dexterity if self.attack_att == "dex_mod" else self.strength
-            if self.attack_att == "dex_mod":
-                self.dexterity = attack_ability
-            else:
-                self.strength = attack_ability
+        self.proficieny_bonus = self.get_proficiency_bonus()
+        multiclass_levels = self.get_multiclass_levels()
 
         self.str_mod = (self.strength - 10) / 2
         self.dex_mod = (self.dexterity - 10) / 2
@@ -58,6 +39,7 @@ class Character(Combat):
         self.dmg_str = "%s(%s+%s)" % (self.attacks, self.weapon, self.str_mod)
         self.dmg_bonus = 0
         self.dmg_str = ""
+        self.level = self.level - multiclass_levels
 
         if self.char_type == "barbarian":
             self.dmg_bonus += 2
@@ -70,6 +52,10 @@ class Character(Combat):
                 self.consitution += 4
                 self.str_mod += 2
                 self.con_mod += 2
+
+        if self.char_type == "paladin":
+            if self.level >= 11:
+                self.smite += "+d8"
 
         self.attack_mod = getattr(self, self.attack_att)
         self.to_hit = self.attack_mod + self.proficieny_bonus
@@ -97,68 +83,69 @@ class Character(Combat):
         if hasattr(self, "shield"):
             self.ac += self.shield
 
+        self.get_crit_chance()
+
     def check_feats(self, hit_chance, raw_hit_chance):
         if not hasattr(self, "feats") or not self.feats:
             return
-        if "polearm_master" in self.feats:
-            self.attacks = int(self.attacks)
         if "savage" in self.feats:
             num_die = self.weapon[0] if self.weapon[0] != "d" else 1
             if self.attacks > 1:
-                self.dmg_str = "%s*(DropLowest%s%s+%s)+%s(%s*(%s+%s))" % (
-                    hit_chance, num_die + 1, self.weapon, self.attack_mod + self.dmg_bonus,
+                self.dmg_str = "%s*(DropLowest%s%s+%s%s)+%s(%s*(%s+%s))" % (
+                    hit_chance, num_die + 1, self.weapon,
+                    self.attack_mod + self.dmg_bonus,
                     self.smite, self.attacks - 1, hit_chance,
-                    self.weapon, self.str_mod + self.dmg_bonus)
+                    self.weapon, self.attack_mod + self.dmg_bonus)
             else:
                 self.dmg_str = "%s*(DropLowest%s%s+%s)" % (
                     hit_chance, num_die + 1, self.weapon, self.attack_mod + self.dmg_bonus)
-        p_chance = None
-        if "gwm" in self.feats or "gwm2" in self.feats:
-            penalty = 5 if "gwm" in self.feats else 2
-            bonus_dmg = 10 if "gwm" in self.feats else (
-                "%.4f" % evaluate("d%s" % self.weapon.split("d")[-1], self.fighting_style)
-            )
-            p_chance = min(1, (raw_hit_chance * 20 - penalty) / 20.0)
-            p_attack = "(%s*(%s+%s+%s%s))" % (p_chance, self.weapon,
-                                              self.attack_mod + self.dmg_bonus,
-                                              bonus_dmg, self.smite)
-            n_attack = "(%s*(%s+%s%s))" % (hit_chance, self.weapon,
-                                           self.attack_mod + self.dmg_bonus, self.smite)
-            np_attack = "%s+%s" % (p_attack, n_attack)
-            p_dpr = self.evaluate_dmg_str("%s*(%s)" % (self.attacks, p_attack))
-            np_dpr = self.evaluate_dmg_str(np_attack) if self.attacks > 1 else 0
-            n_dpr = self.evaluate_dmg_str("%s*(%s)" % (self.attacks, n_attack))
-            maxdpr = max(p_dpr, np_dpr, n_dpr)
-            if maxdpr == p_dpr:
-                self.dmg_str = "%s*%s" % (self.attacks, p_attack)
-            elif maxdpr == np_dpr:
-                self.dmg_str = np_attack
-            else:
-                self.dmg_str = "%s*%s" % (self.attacks, n_attack)
 
+        p_chance = self.check_gwm(raw_hit_chance, hit_chance, self.weapon, self.attacks, None)
         if "polearm_master" in self.feats or "xbow_expert" in self.feats:
             die = "d4" if "polearm_master" in self.feats else "d6"
-            die += "+d8" if "hunter" in self.feats else ""
-            if "gwm" in self.feats:
-                p_attack = "%s*(%s+%s+%s%s)" % (p_chance, die,
-                                                self.attack_mod + self.dmg_bonus,
-                                                bonus_dmg, self.smite)
-                n_attack = "%s*(%s+%s%s)" % (hit_chance, die,
-                                             self.attack_mod + self.dmg_bonus, self.smite)
-                p_dpr = self.evaluate_dmg_str(p_attack)
-                n_dpr = self.evaluate_dmg_str(n_attack)
-                maxdpr = max(p_dpr, n_dpr)
-                if maxdpr == p_dpr:
-                    self.dmg_str = "%s+%s" % (self.dmg_str, p_attack)
-                else:
-                    self.dmg_str = "%s+%s" % (self.dmg_str, n_attack)
+            if "gwm" in self.feats or "gwm2" in self.feats:
+                p_chance = self.check_gwm(raw_hit_chance, hit_chance, die, 1, self.dmg_str)
             else:
                 self.dmg_str = "%s+(%s*(%s+%s%s))" % (self.dmg_str, hit_chance,
                                                       die, self.attack_mod + self.dmg_bonus,
                                                       self.reduced_smite())
 
-        if hasattr(self, "archetype") and self.archetype == "zealot":
+        if hasattr(self, "path") and self.path == "zealot":
             self.dmg_str += "+%s*(d6+%s)" % (p_chance or hit_chance, self.level / 2)
+
+    def check_gwm(self, raw_hit_chance, hit_chance, die, attacks, dmg_str):
+        p_chance = None
+        new_dmg_str = None
+        if "gwm" in self.feats or "gwm2" in self.feats:
+            penalty = 5 if "gwm" in self.feats else 2
+            bonus_dmg = 10 if "gwm" in self.feats else (
+                "%.4f" % evaluate("d%s" % die.split("d")[-1], self.fighting_style)
+            )
+            p_chance = min(1, (raw_hit_chance * 20 - penalty) / 20.0)
+            p_attack = "(%s*(%s+%s+%s%s))" % (p_chance, die,
+                                              self.attack_mod + self.dmg_bonus,
+                                              bonus_dmg, self.smite)
+            n_attack = "(%s*(%s+%s%s))" % (hit_chance, die,
+                                           self.attack_mod + self.dmg_bonus, self.smite)
+            np_attack = "%s+%s" % (p_attack, n_attack)
+            p_dpr = self.evaluate_dmg_str("%s*(%s)" % (attacks, p_attack))
+            np_dpr = self.evaluate_dmg_str(np_attack) if attacks > 1 else 0
+            n_dpr = self.evaluate_dmg_str("%s*(%s)" % (attacks, n_attack))
+            maxdpr = max(p_dpr, np_dpr, n_dpr)
+            if maxdpr == p_dpr:
+                new_dmg_str = "%s*%s" % (attacks, p_attack)
+            elif maxdpr == np_dpr:
+                new_dmg_str = np_attack
+                p_chance = (hit_chance + p_chance) / 2.0
+            else:
+                new_dmg_str = "%s*%s" % (attacks, n_attack)
+                p_chance = hit_chance
+
+        if dmg_str:
+            new_dmg_str = "%s+%s" % (dmg_str, new_dmg_str)
+        if new_dmg_str:
+            self.dmg_str = new_dmg_str
+        return p_chance
 
     def check_def_feats(self, opp):
         if self.char_type == "barbarian":
@@ -178,8 +165,7 @@ class Character(Combat):
     def get_proficiency_bonus(self):
         if not hasattr(self, "level"):
             return 2
-        char_level = self.level if not hasattr(self, "fighter_level") else (
-            self.level + self.fighter_level)
+        char_level = self.character_level()
         mod = 1 if char_level % 4 == 0 else 2
         return char_level / 4 + mod
 
@@ -195,16 +181,15 @@ class Character(Combat):
         die = 20.0
         crit_on = ["20"]
         if hasattr(self, "archetype") and self.archetype == "champion":
-            if self. level >= 15:
+            level = self.level if self.char_type == "fighter" else getattr(self, "fighter_level", 0)
+            if level >= 15:
                 crit_on = ["20", "19", "18"]
-            elif self.level >= 3:
+            elif level >= 3:
                 crit_on = ["20", "19"]
-        if hasattr(self, "sc"):
-            crit_on = ["20", "19"]
         crit_chance = len(crit_on) / die
         if hasattr(self, "adv"):
             crit_chance = 1 - ((die - len(crit_on)) / die)**2
-
+        self.crit_chance = crit_chance
         return crit_chance
 
     def evaluate_dmg_str(self, dmg_str):
@@ -214,5 +199,55 @@ class Character(Combat):
                         crit_type=crit_type)
 
     def add_adv(self):
+        if self.char_type == "barbarian":
+            self.adv = 1
         if hasattr(self, "adv"):
             self.to_hit += evaluate("DropLowest2d20-d20", crit=False)
+
+    def increase_ability_scores(self, ability_increases_at, level_attr):
+        if not ability_increases_at:
+            return
+        num_feats = len(self.feats) - 1 if hasattr(self, "feats") else 0
+        ability_priority = ["strength", "consitution", "dexterity"]
+        if self.attack_att == "dex_mod":
+            ability_priority = list(reversed(ability_priority))
+        ability_increases = 0
+        for ability in ability_priority:
+            for ability_increase_level in ability_increases_at[num_feats + ability_increases:]:
+                if (getattr(self, ability) < 20
+                        and getattr(self, level_attr) >= ability_increase_level):
+                    setattr(self, ability, getattr(self, ability) + 2)
+                    ability_increases += 1
+
+    def character_level(self):
+        return min(
+            20,
+            self.level + self.get_multiclass_levels()
+        )
+
+    def get_level_attacks(self, level_attr):
+        level_attacks = [(1, 1), (5, 2)]
+        ability_increases_at = [4, 8, 12, 16, 19]
+        if level_attr == "fighter_level":
+            level_attacks.extend([(11, 3), (20, 4)])
+            ability_increases_at.extend([6, 14])
+            ability_increases_at = sorted(ability_increases_at)
+        for level, attacks in level_attacks:
+            if getattr(self, level_attr) >= level:
+                if hasattr(self, "attacks"):
+                    self.attacks = max(self.attacks, attacks)
+                else:
+                    self.attacks = attacks
+        return ability_increases_at
+
+    def get_multiclass_levels(self):
+        multiclass_levels = 0
+        if hasattr(self, "level") and not hasattr(self, "attacks"):
+            variables = copy.deepcopy(vars(self))
+            for att in variables:
+                if att.endswith("level"):
+                    ability_increases_at = self.get_level_attacks(att)
+                    self.increase_ability_scores(ability_increases_at, att)
+                    if att.endswith("_level"):
+                        multiclass_levels += getattr(self, att)
+        return multiclass_levels

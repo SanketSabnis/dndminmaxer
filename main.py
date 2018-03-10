@@ -44,9 +44,11 @@ if __name__ == "__main__":
     # print p.ris(opponent), p.dtpr(opponent), opponent.hit_chance(p), hasattr(opponent, "adv")
     # print p1.ris(opponent), p1.dtpr(opponent), opponent.hit_chance(p1), hasattr(opponent, "adv")
     # print p.ris(opponent), p.dtpr(opponent), opponent.hit_chance(p), hasattr(opponent, "adv")
-    # sys.exit(0)
-    independent_stats = ["name", "hit_points", "strength", "dexterity", "level", "dmg_str"]
-    dependent_stats = ["dpr", "eff", "ris"]
+    #print evaluate("d12", "GWF")
+    #print evaluate("2*(0.55*(d12+4+6.5000))", "GWF", True, 0.10, "HB")
+    #sys.exit(0)
+    independent_stats = ["name", "hit_points", "strength", "ac", "crit_chance", "level", "dmg_str"]
+    dependent_stats = ["dpr", "eff"]
     display_stats = independent_stats[:-2] + dependent_stats + [independent_stats[-1]]
     headers = {}
     player_stats = []
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     for plot_metric in ["ac", "level"]:
         if plot_metric == "ac":
             monsters = [Character(**{"char_type": opponent.char_type, plot_metric: metric_value})
-                        for metric_value in range(20, 9, -1)]
+                        for metric_value in range(21, 9, -1)]
         else:
             monsters = [
                 [Character(**dict(p.init_params, **{plot_metric: metric_value})) for p in players]
